@@ -30,48 +30,86 @@ using namespace std;
 	}
 
 
-//---------------------
-//    Math
-//---------------------
-	constexpr double pi() { return M_PI; }
-	double deg2rad(double x) { return x * pi() / 180; }
-	double rad2deg(double x) { return x * 180 / pi(); }
+	//---------------------
+	//    Math
+	//---------------------
+		constexpr double pi() { return M_PI; }
+		double deg2rad(double x) { return x * pi() / 180; }
+		double rad2deg(double x) { return x * 180 / pi(); }
 
 
-//---------------------
-//    Poly - Eval
-//---------------------
+	//---------------------
+	//    Poly - Eval
+	//---------------------
 	double polyeval(Eigen::VectorXd coeffs, double x) {
-	  double result = 0.0;
-	  for (int i = 0; i < coeffs.size(); i++) {
-	    result += coeffs[i] * pow(x, i);
-	  }
-	  return result;
+
+		double result = 0.0;
+		for (int i = 0; i < coeffs.size(); i++) {
+			result += coeffs[i] * pow(x, i);
+		}
+
+		return result;
 	}
 
-//---------------------
-//    Poly - Fit
-//---------------------
-	Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals, int order) {
-	  assert(xvals.size() == yvals.size());
-	  assert(order >= 1 && order <= xvals.size() - 1);
-	  Eigen::MatrixXd A(xvals.size(), order + 1);
+	//---------------------
+	//    Poly - Fit
+	//---------------------
+		Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals, int order)
+		{
+			assert(xvals.size() == yvals.size());
+			assert(order >= 1 && order <= xvals.size() - 1);
+			Eigen::MatrixXd A(xvals.size(), order + 1);
 
-	  // Speed
-		  for (int i = 0; i < xvals.size(); i++) {
-		    A(i, 0) = 1.0;
-		  }
-	  // Way Points
-		  for (int j = 0; j < xvals.size(); j++) {
-		    for (int i = 0; i < order; i++) {
-		      A(j, i + 1) = A(j, i) * xvals(j);
-		    }
-		  }
+			// Speed
+				for (int i = 0; i < xvals.size(); i++) {
+				A(i, 0) = 1.0;
+				}
 
-	  auto Q = A.householderQr();
-	  auto result = Q.solve(yvals);
-	  return result;
-	}
+			// Way Points
+				for (int j = 0; j < xvals.size(); j++) {
+				    for (int i = 0; i < order; i++) {
+				      A(j, i + 1) = A(j, i) * xvals(j);
+				    }
+				}
+
+				auto Q = A.householderQr();
+				auto result = Q.solve(yvals);
+				return result;
+		}
+
+	//---------------------
+	//    Evaluate CTE
+	//---------------------
+		double evaluateCte (Eigen::VectorXd coeffs)
+		{
+			return polyeval(coeffs, 0);
+		}
+
+	//---------------------
+	//    Evaluate EPSI
+	//---------------------
+		double evaluateEpsi (Eigen::VectorXd coeffs)
+		{
+			return -atan(coeffs[1]);
+		}
+
+	//---------------------
+	//    Transform Points
+	//      -- Global -> local
+	//---------------------
+		Eigen::MatrixXd transformGlobalToLocal(double x, double y, double psi, const vector<double> & ptsx, const vector<double> & ptsy)
+		{
+			assert(ptsx.size() == ptsy.size());
+			unsigned len = ptsx.size();
+			auto waypoints = Eigen::MatrixXd(2,len);
+
+			for (auto i=0; i<len ; ++i){
+				waypoints(0,i) =   cos(psi) * (ptsx[i] - x) + sin(psi) * (ptsy[i] - y);
+				waypoints(1,i) =  -sin(psi) * (ptsx[i] - x) + cos(psi) * (ptsy[i] - y);
+			}
+
+			return waypoints;
+		}
 
 
 //===========================
@@ -103,7 +141,6 @@ int main() {
 	        auto j = json::parse(s);
 	        string event = j[0].get<string>();
 	        if (event == "telemetry") {
-	          // j[1] is the data JSON object
 
         //---------------------
         //    Current State -- From Simulator
@@ -116,77 +153,31 @@ int main() {
             double v = j[1]["speed"];
 
             // Transformation about origin
-	            for (size_t i = 0; i < ptsx.size(); i++)
-	            {
-	                // Move (x,y) to origin
-	                    double shift_x = ptsx[i] - px;
-	                    double shift_y = ptsy[i] - py;
-
-	                // Rotate by 90
-	                    ptsx[i] = (shift_x * cos(0-psi) - shift_y * sin(0-psi));
-	                    ptsy[i] = (shift_x * sin(0-psi) + shift_y * cos(0-psi));
-	            }
-
-
-            // Convert to Vector
-                double* ptrx = &ptsx[0];
-	            Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, 6);
-
-	            double* ptry = &ptsy[0];
-	            Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, 6);
+		        Eigen::MatrixXd waypoints = transformGlobalToLocal(px,py,psi,ptsx,ptsy);
+		        Eigen::VectorXd Ptsx = waypoints.row(0);
+		        Eigen::VectorXd Ptsy = waypoints.row(1);
 
             // Solve for Coefficients
-	            auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
+	            auto coeffs = polyfit(Ptsx, Ptsy, 3);
 
             // Calculate Error
-	                double cte = polyeval(coeffs, 0);
-	                double epsi = -atan(coeffs[1]);
-
-                double steer_value = j[1]["steering_angle"];
-                double throttle_value = j[1]["throttle"];
+	                double cte = evaluateCte(coeffs);
+	                double epsi = evaluateEpsi(coeffs);
 
             // State Vector -- < x, y, theta, v, cte, epsi >
                 Eigen::VectorXd state(6);
                 state << 0, 0, 0, v, cte, epsi;
 
+            // Solution
                 auto vars = mpc.Solve(state, coeffs);
 
+            // Controls
+                double steer_value = vars.Delta.at(latency_ind);
+                double throttle_value = vars.A.at(latency_ind);
 
-    //----------------------
-    //      Controls
-    //----------------------
-
-        // Way Points - reference line
-	        vector<double> next_x_vals;
-	        vector<double> next_y_vals;
-
-	        double poly_inc = 2.5;
-	        int num_points = 25;
-
-	        for (int i=1; i < num_points; i++)
-	        {
-		        next_x_vals.push_back(poly_inc * i);
-		        next_y_vals.push_back(polyeval(coeffs, poly_inc * i));
-	        }
-
-        // Predicted Path
-            vector<double> mpc_x_vals;
-            vector<double> mpc_y_vals;
-
-            for (size_t i=2; i < vars.size(); i++)
-            {
-		        if (i%2 == 0) {
-		        	mpc_x_vals.push_back(vars[i]);
-		        }
-
-		        else {
-		        	mpc_y_vals.push_back(vars[i]);
-		        }
-            }
-
-            double Lf = 2.67;
-
-
+            // Previous Values
+                mpc.delta_prev = steer_value;
+                mpc.a_prev = throttle_value;
 
 
         //----------------------
@@ -195,16 +186,27 @@ int main() {
             json msgJson;
 
             // Controls
-		        msgJson["steering_angle"] = vars[0]/(deg2rad(25) * Lf);
-		        msgJson["throttle"] = vars[1];
+//		        msgJson["steering_angle"] = vars[0]/(deg2rad(25) * Lf);
+//		        msgJson["throttle"] = vars[1];
+		        msgJson["steering_angle"] = -steer_value/0.436332;
+		        msgJson["throttle"] = throttle_value;
+
+	        //Display the waypoints/reference line
+		        vector<double> next_x_vals;
+		        vector<double> next_y_vals;
+
+		        for (unsigned i=0 ; i < ptsx.size(); ++i) {
+			        next_x_vals.push_back(Ptsx(i));
+			        next_y_vals.push_back(Ptsy(i));
+		        }
 
 	        // Reference Path
 		        msgJson["next_x"] = next_x_vals;
 		        msgJson["next_y"] = next_y_vals;
 
 	        // Predicted Path
-	            msgJson["mpc_x"] = mpc_x_vals;
-	            msgJson["mpc_y"] = mpc_y_vals;
+	            msgJson["mpc_x"] = vars.X;
+	            msgJson["mpc_y"] = vars.Y;
 
 
             // Build JSON string
@@ -222,7 +224,7 @@ int main() {
 	            // SUBMITTING.
 
             // Send to Simulator
-	            //this_thread::sleep_for(chrono::milliseconds(100));
+	            this_thread::sleep_for(chrono::milliseconds(100));
 	            ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
 
