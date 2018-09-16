@@ -96,7 +96,7 @@ int main() {
 	    // The 4 signifies a websocket message
 	    // The 2 signifies a websocket event
 	    string sdata = string(data).substr(0, length);
-	    cout << sdata << endl;
+	    //cout << sdata << endl;
 	    if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
 	        string s = hasData(sdata);
 	        if (s != "") {
@@ -116,7 +116,7 @@ int main() {
             double v = j[1]["speed"];
 
             // Transformation about origin
-	            for (int i = 0; i < ptsx.size(); i++)
+	            for (size_t i = 0; i < ptsx.size(); i++)
 	            {
 	                // Move (x,y) to origin
 	                    double shift_x = ptsx[i] - px;
@@ -173,7 +173,7 @@ int main() {
             vector<double> mpc_x_vals;
             vector<double> mpc_y_vals;
 
-            for (int i=2; i < vars.size(); i++)
+            for (size_t i=2; i < vars.size(); i++)
             {
 		        if (i%2 == 0) {
 		        	mpc_x_vals.push_back(vars[i]);
@@ -209,7 +209,7 @@ int main() {
 
             // Build JSON string
 	            auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-	            std::cout << msg << std::endl;
+	           // std::cout << msg << std::endl;
 
             // Latency
 	            // The purpose is to mimic real driving conditions where

@@ -10,7 +10,7 @@ using CppAD::AD;
 //---------------------
 
     // Time Step
-        size_t N = 10;
+        const int N = 10;
         double dt = 0.1;
 
     // Lf -- from Udacity
@@ -159,10 +159,10 @@ using CppAD::AD;
 			double epsi = state[5];
 
 		// Num Vars
-			size_t n_vars = N * 6 + (N - 1) * 2;
+			int n_vars = N * 6 + (N - 1) * 2;
 
 		// Constraints
-			size_t n_constraints = N * 6;
+			int n_constraints = N * 6;
 
 		// Initialize
 			Dvector vars(n_vars);
@@ -175,13 +175,13 @@ using CppAD::AD;
 			Dvector vars_upperbound(n_vars);
 
 			// Non Actuator limits
-				for (int i=0; i < delta_start; i++) {
+				for (size_t i=0; i < delta_start; i++) {
 					vars_lowerbound[i] = -1.0e19;
 					vars_upperbound[i] =  1.0e19;
 				}
 
 			// Steering limits
-				for (int i = delta_start; i < a_start; i++) {
+				for (size_t i = delta_start; i < a_start; i++) {
 					vars_lowerbound[i] = -0.436332 * Lf;
 					vars_upperbound[i] =  0.436332 * Lf;
 				}
@@ -252,8 +252,8 @@ using CppAD::AD;
 				ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 
 			// Cost
-				auto cost = solution.obj_value;
-				std::cout << "Cost " << cost << std::endl;
+				//auto cost = solution.obj_value;
+				//std::cout << "Cost " << cost << std::endl;
 
 		//---------------------
 		//    Result
