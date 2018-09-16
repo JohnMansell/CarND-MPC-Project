@@ -66,6 +66,15 @@ when the car is close to where it was predicted to be via the MPC. MPC is able t
 where the PID controller was not.
 
 
+# Equations:
+> If the equations images does not show, the equations are:  
+x = x + v*cos(ψ)* dt  
+y = y + v sin(psi) dt  
+v=v+a∗dt  
+a in [-1,1]  
+ψ=ψ+(v/L_f)*δ∗dt  
+
+
 
 
 
