@@ -3,6 +3,9 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+### Udacity
+-- See [WriteUp.md](./WriteUp.md) for rubric points
+
 ## Dependencies
 
 * cmake >= 3.5
