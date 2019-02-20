@@ -14,7 +14,7 @@ between actuations commands on top of the connection latency.
 > C++
 
 # Video
-![](images/myFile.gif)
+> Click to see full video on YouTube
 [![MPC](images/myFile.gif)](https://youtu.be/Fps7wlI__2E "Model Predictive Control")
 
 ### Included Files
