@@ -17,6 +17,6 @@ between actuations commands on top of the connection latency.
 [![MPC](http://img.youtube.com/vi/Fps7wlI__2E/0.jpg)](https://youtu.be/Fps7wlI__2E "Model Predictive Control")
 
 ### Included Files
-> [main.cpp](src/main.cpp) -- Interfaces with the simulator, connects to the MPC, sends steering and throttle information to the simulator
-> [MPC.cpp](src/MPC.cpp) -- Handles MPC calculations
-> [WriteUp.md](WriteUp.md) -- Full write up
+> [main.cpp](src/main.cpp) -- Interfaces with the simulator, connects to the MPC, sends steering and throttle information to the simulator  
+> [MPC.cpp](src/MPC.cpp) -- Handles MPC calculations  
+> [WriteUp.md](WriteUp.md) -- Full write up  
