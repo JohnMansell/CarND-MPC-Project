@@ -1,5 +1,5 @@
 # Model Predictive Control -- MPC
-> [![MPC](images/myFile.gif)](https://youtu.be/Fps7wlI__2E "Model Predictive Control")
+> [![MPC](images/myFile.gif)](https://youtu.be/Fps7wlI__2E "Model Predictive Control")  
 > [Full Video](https://youtu.be/Fps7wlI__2E) on YouTube
 
 # Objective
